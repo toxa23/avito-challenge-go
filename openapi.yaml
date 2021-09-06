@@ -1,0 +1,201 @@
+openapi: 3.0.0
+info:
+  description: The service to change users balance
+  version: 1.0.0
+  title: The balance microservice
+servers:
+  - url: http://localhost:5000
+paths:
+  /v1/user/{id}/balance:
+    get:
+      description: get user balance
+      parameters:
+        - in: path
+          name: id
+          description: user identifier
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: currency
+          description: 3-characters currency code to output balance in
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: get user balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "404":
+          description: user not found
+  /v1/user/{id}/transactions:
+    get:
+      description: get user transactions
+      parameters:
+        - in: path
+          name: id
+          description: user identifier
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: page
+          description: page number for paginated requests
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: items per page
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: sort
+          description: sorting order. "-" means descending order
+          required: false
+          schema:
+            type: string
+            enum: [amount, -amount, created_at, -created_at]
+      responses:
+        "200":
+          description: get user balance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+        "404":
+          description: user not found
+  /v1/user/{id}/balance/add:
+    post:
+      description: Add money to user balance
+      parameters:
+        - in: path
+          name: id
+          description: user identifier
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payload'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: amount is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/user/{id}/balance/subtract:
+    post:
+      description: Subtract money from user balance
+      parameters:
+        - in: path
+          name: id
+          description: user identifier
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payload'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: amount is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /v1/user/{id}/transfer:
+    post:
+      description: Transfer money from one user to another
+      parameters:
+        - in: path
+          name: id
+          description: sender user identifier
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferPayload'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+        "400":
+          description: amount is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Balance:
+      type: object
+      properties:
+        amount:
+          type: number
+        currency:
+          type: string
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        amount:
+          type: number
+        created_at:
+          type: string
+        details:
+          type: string
+    Payload:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: integer
+        details:
+          type: string
+    TransferPayload:
+      allOf:
+        - $ref: '#/components/schemas/Payload'
+        - type: object
+          required: [user_id]
+          properties:
+            user_id:
+              type: integer
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
